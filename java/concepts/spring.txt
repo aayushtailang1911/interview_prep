@@ -1,0 +1,268 @@
+SPRING:
+======
+Spring framework:
+----------------
+It is lightweight,modular,opensource java framework for building enterprise applications.
+
+IOC Container:
+-------------
+IOC stands for Inversion of control
+It handles bean creating and its lifecycle
+
+IOC is a design principle where the control of object creation and dependency management is transferred from the application code to the Spring container, enabling loose coupling and better maintainability.
+
+2 containers: Bean factory, Application context
+
+Dependency Injection:
+--------------------
+It is a design pattern
+Spring automatically injects required dependencies into a class instead of the class creating them
+Used for loose coupling
+
+Ways: Constructor injection, Setter injection
+
+Beans:
+-----
+These are objects which are maintained by IOC container
+
+Lifecycle of bean:
+1)Instantiation
+2)Dependency Injection
+3)Initialization -> public void init()
+4)Usage
+5)Destroy -> public void destroy()
+
+Create -> inject -> init -> use -> destroy
+
+Autowiring :
+----------
+Autowiring is the process by which Spring automatically resolves and injects dependencies by type, name, or constructor. 
+Internally, Spring uses reflection and the IoC container to locate matching beans and inject them.
+
+ways: XML -> by name, by type , constructor . Annotation -> @Autowired
+
+Problem  : Multiple bean with same name/type problem 
+Solution : 1.@Qualifier 2.@Primary
+
+Bean Scope:
+----------
+It defines how many times a bean object will be created and till when we can use it.
+
+1.Singleton -> single object will be created and used through out the application 
+2.Prototype -> for every call it will create a new object of that bean
+3.Request   -> for every http request new bean is created
+4.session   -> once per user session
+5.globalSession
+
+@Eager vs @Lazy Initialization
+------------------------------
+Eager -> by default -> creates singleton object when application starts  -> faster setup time, errors are detected faster
+Lazy  -> does not create object when application starts it created proxy -> creates bean when it is called for the first time
+
+Circular dependency
+------------------
+Problem: A requires B bean and B requires A bean -> deadlock 
+solution: Use @Lazy
+
+Spring Modules:
+--------------
+1.Spring Core -> Core, Beans, Context, Expression Language (SpEL)
+2.Spring Web 
+
+Modules:
+	Web
+	Web MVC
+	WebSocket
+
+Use:
+	Web applications
+	REST APIs
+	Controllers
+
+3.Data Access/Integration
+
+Modules:
+	JDBC
+	ORM (Hibernate, JPA)
+	Transactions
+
+Use:
+	Database interaction
+	Transaction management
+
+4.AOP -> method interceptors (pre and post) and point cut
+
+Use:
+	Logging
+	Security
+	Transactions
+	
+5.Test Module
+6.Messaging
+
+Use:
+	Messaging systems
+	JMS
+	Event-driven apps
+	
+********************************************************************
+Spring MVC
+==========
+Spring MVC is a web framework that handles HTTP requests using DispatcherServlet and follows the MVC design pattern	to build web applications
+
+Model → Data
+View → UI
+Controller → handles Request
+
+Request → DispatcherServlet → HandlerMapping → Controller → Service → Response
+
+Step-by-step INTERNAL FLOW (important 🔥)
+🪜 Step 1: Client request bhejta hai
+GET /hello
+
+👉 Browser → server
+
+🪜 Step 2: DispatcherServlet intercept karta hai
+
+👉 Har request pehle yaha aati hai
+
+🪜 Step 3: Handler Mapping
+
+👉 DispatcherServlet poochta hai:
+“Is URL ko kaun handle karega?”
+
+👉 Spring check karta hai:
+
+@GetMapping("/hello")
+
+👉 Controller method mil gaya ✅
+
+🪜 Step 4: Controller execute hota hai
+@RestController
+class MyController {
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello Bhai";
+    }
+}
+🪜 Step 5: Service layer call (optional)
+
+👉 Business logic run hota hai
+
+🪜 Step 6: Response return
+
+👉 Data wapas DispatcherServlet ko milta hai
+
+🪜 Step 7: View Resolver (agar needed)
+
+👉 JSP/HTML resolve karta hai
+👉 (REST me direct JSON return hota hai)
+
+🪜 Step 8: Response client ko
+
+👉 Browser ko final output milta hai
+
+DispatcherServlet:
+-----------------
+Receives request
+searches for Suitable handler
+calls Controller
+process Response
+
+Filter -> DispatcherServlet -> Interceptors
+
+HandlerMapping
+--------------
+
+👉 Annotation scan karta hai:
+
+@GetMapping
+@PostMapping
+@RequestMapping
+
+👉 URL match karta hai
+
+HandlerAdapter
+--------------
+👉 Controller ko actually execute karta hai
+
+**********************************************
+Spring Security:
+===============
+Spring Security is a framework that provides authentication and authorization for Java applications
+
+Authentication : Login process (who are you.gif) -> identity verify
+Authorization  : Access Control (what you can do) -> permission check
+
+Ex: Authentication:
+
+Username + Password
+
+👉 Result:
+✔ User verified
+
+Authorization:
+Admin → all access
+User → limited access
+
+Core Components:
+---------------
+1. Security Filter Chain
+UsernamePasswordAuthenticationFilter
+BasicAuthenticationFilter
+etc.
+
+2.Authentication Manager
+3.UserDetailsService
+4.UserDetails
+5.PasswordEncoder
+
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf().disable()
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/admin/**").hasRole("ADMIN")
+            .requestMatchers("/user/**").hasRole("USER")
+            .anyRequest().authenticated()
+        )
+        .formLogin();
+
+    return http.build();
+}
+
+JWT:
+---
+Stands for Json Web Token
+
+JWT is a compact,stateless, self-contained token used for securely transmitting user authentication and authorization information
+
+It contains of 3 parts:
+
+Header, Payload, Signature
+
+Header   : Includes metadata information contains 2 parts: typ(token type),alg(hashing alogithm)
+Payload  : Contains claims(Public,Registered,Private)
+Signature: Checks if token is tampered or not
+
+HHHHHH.PPPPPP.SSSSSSSSS
+
+JWT Authentication flow:
+-----------------------
+1.Login
+2.Server verifies username password
+3.Generated JWT token
+4.Client stores the token
+5.Send token in each request : Authorization: Bearer <JWT_TOKEN>
+6.Server verifies the token
+
+
+*************************************
+Limitations of Spring Framework
+-------------------------------
+1.Too Much Configuration
+2.huge Setup Time
+3.Dependency Management pain
+4.No embedded servers
+5.Boilerplate code

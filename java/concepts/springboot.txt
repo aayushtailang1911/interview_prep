@@ -1,0 +1,343 @@
+Springboot
+==========
+Spring Boot is an extension of the Spring framework that simplifies application development by providing auto-configuration, embedded servers, and starter dependencies
+
+Need
+----
+Spring Boot was introduced to reduce boilerplate configuration, simplify dependency management, and enable rapid development using auto-configuration and embedded servers.
+
+Problem Solved by Springboot:
+----------------------------
+1.Auto Configuration : you just add dependency, SB will automatically do the setup
+2.Starter dependencies
+3.Embedded servers : no need for external tomcat
+4.Minimal Configuration
+5.Production ready features: acutators
+
+Feature			Spring		Spring Boot
+Config			Manual		Auto
+Server			External	Embedded
+Setup time		High		Low
+Dependencies	Manual		Starter
+XML				Required 	Not needed
+
+Annotations:
+-----------
+@SpringBootApplication : @Configuration + @EnableAutoConfiguration + @ComponentScan
+@RestController : @Controller + @ResponseBody
+@Component
+@Service
+@Repository
+@Entity
+@Id
+@GeneratedValue
+@Get/Post/Put/DeleteMapping
+@ControllerAdvice: For global exception handling
+@ExceptionHandler: Hanles specific exception
+@Value
+@ConfigurationProperties(prefix = "c2")
+@Valid: for validations
+@Cacheble : for caching
+@EnableCaching
+
+Confitional Annotations:
+-----------------------
+1.@ConditionalOnClass: if present in classpath then enable config
+ex: if DataSource dependency is present then enable the bean otherwise skip
+
+@Configuration
+@ConditionalOnClass(name = "javax.sql.DataSource")
+class DBConfig {
+
+    @Bean
+    public MyDBService dbService() {
+        return new MyDBService();
+    }
+}
+
+2.@ConditionalOnMissingBean: If bean is not present then create it otherwise skip
+
+@Bean
+@ConditionalOnMissingBean(BClass.class)
+public AClass aClass() {
+System.out.println("AClass is created");
+return new AClass();
+}
+
+@Bean
+public BClass bClass() {
+System.out.println("BClass is created");
+return new BClass();
+
+In this example, AClass will only be created if there is no bean of type BClass in the Spring context. If BClass is already present, AClass will not be created.
+
+3.@ConditionalOnBean:
+4.@ConditionalOnProperty: on the basis of property
+
+@Bean
+@ConditionalOnProperty(name = "cache.enabled", havingValue = "true")
+public CacheService cacheService() {
+    return new CacheService();
+}
+
+app.properties
+cache.enabled = true;
+
+
+Auto-Configuration:
+------------------
+Auto-configuration automatically configures Spring beans based on the classpath, existing beans, and application properties
+
+ex: we add this dependency:
+spring-boot-starter-web
+springboot internally setup : DispatcherServlet, Tomcat, Jackson, MVC config
+
+"Spring Boot auto-configuration works by scanning the classpath and loading configuration classes conditionally using annotations like @ConditionalOnClass and @ConditionalOnMissingBean. It automatically configures beans based on available dependencies."
+
+application.properties/yaml:
+---------------------------
+Configuration file used to define application settings like server, database, logging, etc.
+
+common configurations:
+
+1.Server config
+server.port=8081
+server.servlet.context-path=/api
+
+yaml->
+server:
+  port: 8081
+
+2.Db config
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb
+spring.datasource.username=root
+spring.datasource.password=root
+spring.jpa.hibernate.ddl-auto=update
+
+3.Logging
+logging.level.root=INFO
+logging.level.com.app=DEBUG
+
+4.profiles
+spring.profiles.active=dev
+
+REST APIs:
+---------
+REST: Representational State transfer
+REST APIs allow communication between client and server using HTTP methods like GET, POST, PUT, DELETE
+
+Request Handling:
+----------------
+1.Path Variables:
+@GetMapping("/users/{id}")
+public String getUser(@PathVariable int id) {
+    return "User " + id;
+}
+
+2.Query Param:
+@GetMapping("/users")
+public String getUser(@RequestParam String name) {
+    return name;
+}
+
+3.Request Body : JSON to Java object converter (Jackson)
+@PostMapping("/users")
+public String create(@RequestBody User user) {
+    return user.getName();
+}
+
+4.Response Handling:
+return ResponseEntity.status(201).body(UserDto);
+
+Full flow
+---------
+Client
+ ↓
+DispatcherServlet
+ ↓
+Controller
+ ↓
+Service
+ ↓
+Response (JSON)
+
+DTO: Data Transfer Object
+---
+ex: User -> name, age, id , password
+	UserDto -> name,age, id
+
+Spring Data JPA
+---------------
+Spring Data JPA simplifies database access by reducing boilerplate code using repositories and ORM	
+
+@Repository
+interface UserRepository extends JpaRepository<User, Long> {}
+
+Inbuild methods:
+repo.save(user);        // create/update
+repo.findById(1L);      // read
+repo.findAll();         // all
+repo.deleteById(1L);    // delete
+
+QueryMethods:
+List<User> findByName(String name);
+findByNameAndAge(String name, int age)
+findByNameContaining(String name)
+findByAgeGreaterThan(int age)
+
+Custom Query:
+@Query("SELECT u FROM User u WHERE u.name = :name")
+List<User> getUsers(@Param("name") String name);
+
+Exception Handling:
+------------------
+problem:
+@GetMapping("/user/{id}")
+public User getUser(@PathVariable Long id) {
+    return repo.findById(id).get(); // 💀 crash if not found
+}
+
+Solutions:
+1.Custom Exception:
+class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(String msg) {
+        super(msg);
+    }
+}
+
+2.Throw Exception
+public User getUser(Long id) {
+    return repo.findById(id)
+        .orElseThrow(() -> new UserNotFoundException("User not found"));
+}
+
+3.Global Exception Handler
+@ControllerAdvice
+class GlobalExceptionHandler {
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(404).body(ex.getMessage());
+    }
+}
+
+Exception Flow:
+--------------
+Controller
+ ↓
+Exception thrown
+ ↓
+HandlerExceptionResolver
+ ↓
+@ControllerAdvice
+ ↓
+Response
+
+Logging:
+-------
+Level	Meaning
+ERROR	serious issue
+WARN	warning
+INFO	normal info
+DEBUG	detailed logs
+TRACE	very detailed
+
+log.info("User created");
+log.debug("User details: {}", user);
+log.error("Error occurred");
+
+config:
+logging.level.root=INFO
+logging.level.com.app=DEBUG
+
+Actuators:
+---------
+Production monitoring code
+dependency: spring-boot-starter-actuator
+health,metrics,info,beans,etc
+management.endpoints.web.exposure.include=health,info
+
+Pagination:
+----------
+for handling large data into chunks
+
+Page<User> users = repo.findAll(PageRequest.of(0, 10));
+
+@GetMapping
+public Page<User> getUsers(@RequestParam int page, @RequestParam int size)
+
+Caching:
+-------
+Temperory storage for faster access of data.
+
+@Cacheable("users")
+public List<User> getUsers() {}
+
+👉 First call → DB
+👉 Next calls → cache
+
+Validations:
+-----------
+class UserDTO {
+
+    @NotNull
+    private String name;
+}
+
+@PostMapping
+public void save(@Valid @RequestBody UserDTO dto) {}
+
+Maven and Gradle:
+----------------
+These are build tools which are used to build/run/package our project
+
+role:
+Dependencies download 📦
+Code compile ⚙️
+Test run 🧪
+creating JAR/WAR
+
+config file:
+-----------
+Maven: pom.xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+
+Gradle: build.gradle
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
+
+| Feature      | Maven     | Gradle        |
+| ------------ | --------- | ------------- |
+| Config       | XML       | Groovy/Kotlin |
+| Speed        | Slower    | Faster        |
+| Flexibility  | Less      | High          |
+| Learning     | Easy      | Medium        |
+| Build system | Lifecycle | Tasks         |
+
+commands:
+maven:
+mvn clean
+mvn install
+
+gradle:
+./gradlew clean
+./gradlew build
+
+Code → Build tool → Dependencies download → Compile → Package → Run
+
+*********************
+Limitations of Springboot:
+-------------------------
+1. Because of Auto-Configuration it is difficult to debug
+2. Less control over abstraction
+3. High startup time
+4. huge deployment size due to fat jar
+5. Version conflicts
+
+Spring Boot simplifies development but introduces challenges like reduced control due to auto-configuration, higher memory usage, slower startup time for large applications, and debugging complexity due to hidden configurations
