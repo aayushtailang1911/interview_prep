@@ -1,0 +1,65 @@
+Springboot Microservices:
+========================
+Monolithic vs Microservices
+---------------------------
+| Monolith           | Microservices             |
+| ------------------ | ------------------------- |
+| Sab kuch ek hi app | Multiple chhote apps      |
+| Deploy ek saath    | Alag-alag deploy          |
+| Scale pura app     | Sirf needed service scale |
+
+Monolithic: multiple components are combined in single large app.
+Microservices: Architectural style where application is divided into small, independent, loosely coupled services.
+
+Monolithic:
+==========
+
+ex:
+class Application {
+   // user logic
+   // order logic
+   // payment logic
+}
+
+problem:
+-------
+	single code base
+	deployed in single bundle
+	change in one service then needs to deploy whole application
+	one bug and whole application down
+	difficult to scale
+	heavy deployment
+	
+Microservices:
+-------------
+Split into services:
+
+User Service
+Order Service
+Payment Service
+
+Each service will have:
+----------------------
+it's own codebase
+it's own DB (mostly)
+it's own deployment
+
+Advantages:
+----------
+1.Independent deployment
+2.Loose Coupling
+3.High cohesion: Single responsibility
+	User service → will manage users only
+	Order service → will manage order only 
+	
+Disadvantages:
+-------------
+1.Handling microservices is complex : have to manage multiple services
+2.Hard to debug: will get logs from different different services
+
+
+Service Registry:
+----------------
+It is a register will all the services will be registered.
+Used to track all the information of a perticular service.
+can call the service by service name.
