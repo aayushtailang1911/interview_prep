@@ -1,6 +1,7 @@
 package com.example.user.service;
 
 import com.example.user.entity.User;
+import com.example.user.exception.ResourceNotFoundException;
 import com.example.user.external.HotelClient;
 import com.example.user.external.RatingClient;
 import com.example.user.dto.*;
@@ -27,16 +28,26 @@ public class UserService {
     public UserResponse getUser(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found for id : "+userId));
 
-        // Step 1: fetch ratings
-        List<Rating> ratings = ratingClient.getRatings(userId);
+        List<Rating> ratings = null;
+        try {
+            // Step 1: fetch ratings
+            ratings = ratingClient.getRatings(userId);
 
-        // Step 2: attach hotel data
-        ratings.forEach(r -> {
-            Hotel hotel = hotelClient.getHotel(r.getHotelId());
-            r.setHotel(hotel);
-        });
+            // Step 2: attach hotel data
+            ratings.forEach(r -> {
+                try {
+                    Hotel hotel = hotelClient.getHotel(r.getHotelId());
+                    r.setHotel(hotel);
+                }catch (RuntimeException runtimeException){
+                    throw new RuntimeException("no hotels found with HotelId: "+userId);
+                }
+            });
+        }catch (Exception e){
+            throw new ResourceNotFoundException("rating not found for user with id : " + userId);
+        }
+
 
         // Step 3: build response
         UserResponse response = new UserResponse();
